@@ -386,6 +386,8 @@ if (!validInviteCodes.includes(inviteCode)) {
     );
 req.session.userId = result.rows[0].id;
 
+req.session.userId = result.rows[0].id;
+
 req.session.save((err) => {
   if (err) {
     console.error("Session save error:", err);
@@ -394,16 +396,20 @@ req.session.save((err) => {
     });
   }
 
-  res.json({
+  return res.json({
     success: true,
     user: result.rows[0]
   });
 });
-  } catch (e) {
-    res.json({ error: "注册失败" });
-  }
-});
 
+} catch (e) {
+  console.error("注册错误:", e);
+
+  return res.status(500).json({
+    error: "注册失败",
+    detail: e.message
+  });
+}
 app.post("/api/login", loginLimiter, async (req, res) => {
   const { username, password } = req.body;
   try {
