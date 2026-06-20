@@ -386,8 +386,6 @@ if (!validInviteCodes.includes(inviteCode)) {
     );
 req.session.userId = result.rows[0].id;
 
-req.session.userId = result.rows[0].id;
-
 req.session.save((err) => {
   if (err) {
     console.error("Session save error:", err);
