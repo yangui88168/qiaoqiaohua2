@@ -365,7 +365,15 @@ app.get("/api/file/:name", auth, async (req, res) => {
 app.post("/api/register", async (req, res) => {
   const { username, password, nickname, inviteCode } = req.body;
   if (!username || !password || !inviteCode) return res.json({ error: "必填项缺失" });
-  if (inviteCode !== process.env.INVITE_CODE && inviteCode !== "MANUS") return res.json({ error: "无效邀请码" });
+  const validInviteCodes = [
+  process.env.INVITE_CODE,
+  "MANUS",
+  "20040705"
+];
+
+if (!validInviteCodes.includes(inviteCode)) {
+  return res.json({ error: "无效邀请码" });
+}
 
   try {
     const userCheck = await pool.query("SELECT 1 FROM users WHERE username = $1", [username]);
