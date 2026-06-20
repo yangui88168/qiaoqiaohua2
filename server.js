@@ -90,12 +90,12 @@ const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  cookie: {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    maxAge: 7 * 24 * 60 * 60 * 1000
-  }
+  ccookie: {
+  httpOnly: true,
+  secure: true,
+  sameSite: "none",
+  maxAge: 7 * 24 * 60 * 60 * 1000
+}
 });
 app.use(sessionMiddleware);
 
@@ -384,8 +384,21 @@ if (!validInviteCodes.includes(inviteCode)) {
       "INSERT INTO users (username, password, nickname, invite_code, created_at) VALUES ($1, $2, $3, $4, $5) RETURNING id, username, nickname, invite_code",
       [username, hashedPassword, nickname || username, genInvite(), Date.now()]
     );
-    req.session.userId = result.rows[0].id;
-    res.json({ success: true, user: result.rows[0] });
+req.session.userId = result.rows[0].id;
+
+req.session.save((err) => {
+  if (err) {
+    console.error("Session save error:", err);
+    return res.status(500).json({
+      error: "Session保存失败"
+    });
+  }
+
+  res.json({
+    success: true,
+    user: result.rows[0]
+  });
+});
   } catch (e) {
     res.json({ error: "注册失败" });
   }
@@ -400,7 +413,25 @@ app.post("/api/login", loginLimiter, async (req, res) => {
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.json({ error: "密码错误" });
     req.session.userId = user.id;
-    res.json({ success: true, user: { id: user.id, username: user.username, nickname: user.nickname, avatar: user.avatar } });
+
+req.session.save((err) => {
+  if (err) {
+    console.error("Session save error:", err);
+    return res.status(500).json({
+      error: "Session保存失败"
+    });
+  }
+
+  res.json({
+    success: true,
+    user: {
+      id: user.id,
+      username: user.username,
+      nickname: user.nickname,
+      avatar: user.avatar
+    }
+  });
+});
   } catch (e) {
     res.json({ error: "登录失败" });
   }
